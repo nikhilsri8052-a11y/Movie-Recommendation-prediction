@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation Predictor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="theme-toggle-wrap">
+        <button class="btn btn-outline-secondary rounded-pill theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <span class="me-2">☀</span>
+            <span>Light</span>
+        </button>
+    </div>
+
+    <main class="container py-5">
+        <header class="row mb-4">
+            <div class="col-lg-8">
+                <div class="text-uppercase small fw-semibold mb-3 text-accent">AI-Powered Movie Matcher</div>
+                <h1 class="display-5 fw-bold mb-3 hero-title">
+                    Movie Recommendation <span class="text-accent">Predictor</span>
+                </h1>
+                <p class="lead text-muted mb-4">Choose your preferred movie taste and discover a tailored recommendation from our catalog.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge rounded-pill text-bg-light border">🎬 Tailored picks</span>
+                    <span class="badge rounded-pill text-bg-light border">⭐ Ratings & popularity</span>
+                    <span class="badge rounded-pill text-bg-light border">📽️ Educational demo</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="card rounded-4 mb-4">
+            <div class="card-body p-4 p-md-5">
+                <form id="predictForm" action="/predict" method="post" novalidate>
+                    <div class="row g-4">
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="movieName">Movie Name</label>
+                            <input type="text" class="form-control" id="movieName" name="movieName" placeholder="Try 'Inception', 'The Matrix', or 'Titanic'">
+                            <div class="form-text">Type any movie title to see similar picks using the same TF-IDF + cosine similarity logic from the notebook.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" for="genre">Preferred Genre</label>
+                                    <select class="form-select" id="genre" name="genre">
+                                        <option value="">Any Genre</option>
+                                        <option value="Action">Action</option>
+                                        <option value="Adventure">Adventure</option>
+                                        <option value="Animation">Animation</option>
+                                        <option value="Comedy">Comedy</option>
+                                        <option value="Crime">Crime</option>
+                                        <option value="Drama">Drama</option>
+                                        <option value="Fantasy">Fantasy</option>
+                                        <option value="Horror">Horror</option>
+                                        <option value="Romance">Romance</option>
+                                        <option value="Science Fiction">Science Fiction</option>
+                                        <option value="Thriller">Thriller</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" for="language">Language</label>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="">Any Language</option>
+                                        <option value="en">English</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="hi">Hindi</option>
+                                        <option value="ja">Japanese</option>
+                                        <option value="ko">Korean</option>
+                                        <option value="cn">Mandarin</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" for="releaseEra">Release Era</label>
+                                    <select class="form-select" id="releaseEra" name="releaseEra">
+                                        <option value="Any">Any Era</option>
+                                        <option value="1980s">1980s</option>
+                                        <option value="1990s">1990s</option>
+                                        <option value="2000s">2000s</option>
+                                        <option value="2010s">2010s</option>
+                                        <option value="2020s">2020s</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="runtime" class="form-label fw-semibold">
+                                Runtime
+                                <span class="badge rounded-pill ms-2 text-bg-light" id="runtimeDisplay">— min</span>
+                            </label>
+                            <div class="slider-track-wrap">
+                                <input type="range" name="runtime" id="runtime" min="80" max="220" value="120" step="5">
+                                <div class="slider-fill" id="runtimeFill"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mt-2">
+                                <span>80 min</span><span>220 min</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="minRating" class="form-label fw-semibold">
+                                Minimum Rating
+                                <span class="badge rounded-pill ms-2 text-bg-light" id="minRatingDisplay">—</span>
+                            </label>
+                            <div class="slider-track-wrap">
+                                <input type="range" name="minRating" id="minRating" min="4" max="9" value="7" step="0.1">
+                                <div class="slider-fill" id="minRatingFill"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mt-2">
+                                <span>4.0</span><span>9.0</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="popularity" class="form-label fw-semibold">
+                                Popularity
+                                <span class="badge rounded-pill ms-2 text-bg-light" id="popularityDisplay">—</span>
+                            </label>
+                            <div class="slider-track-wrap">
+                                <input type="range" name="popularity" id="popularity" min="0" max="250" value="100" step="5">
+                                <div class="slider-fill" id="popularityFill"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mt-2">
+                                <span>0</span><span>250</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="minVotes" class="form-label fw-semibold">
+                                Minimum Votes
+                                <span class="badge rounded-pill ms-2 text-bg-light" id="minVotesDisplay">—</span>
+                            </label>
+                            <div class="slider-track-wrap">
+                                <input type="range" name="minVotes" id="minVotes" min="100" max="20000" value="1000" step="100">
+                                <div class="slider-fill" id="minVotesFill"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mt-2">
+                                <span>100</span><span>20k</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="summary-box p-3 rounded-4">
+                                <div class="row g-3 text-center">
+                                    <div class="col-sm-3">
+                                        <div class="small text-muted">Genre</div>
+                                        <div class="fw-semibold" id="summaryGenre">Any</div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="small text-muted">Language</div>
+                                        <div class="fw-semibold" id="summaryLanguage">Any</div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="small text-muted">Runtime</div>
+                                        <div class="fw-semibold" id="summaryRuntime">—</div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="small text-muted">Rating</div>
+                                        <div class="fw-semibold" id="summaryRating">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-4" id="predictBtn">
+                                <span class="btn-text">Find My Movie</span>
+                            </button>
+                            <div class="small text-muted mt-3">This demo uses a lightweight content-based recommendation flow for educational purposes.</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="card rounded-4 mb-4 result-section" id="resultSection">
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-7">
+                        <div class="gauge-wrap">
+                            <svg class="gauge-svg" viewBox="0 0 300 170" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#8ec5ff"/>
+                                        <stop offset="55%" stop-color="#2563eb"/>
+                                        <stop offset="100%" stop-color="#f43f5e"/>
+                                    </linearGradient>
+                                    <filter id="glow">
+                                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <path class="gauge-bg" d="M 30 155 A 120 120 0 0 1 270 155" fill="none" stroke-width="16" stroke-linecap="round"/>
+                                <path class="gauge-range" id="gaugeRange" d="M 150 35 A 120 120 0 0 1 270 155" fill="none" stroke="#f43f5e33" stroke-width="22" stroke-linecap="round"/>
+                                <path class="gauge-arc" id="gaugeArc" d="M 30 155 A 120 120 0 0 1 270 155" fill="none" stroke="url(#arcGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"/>
+                                <line class="gauge-needle" id="gaugeNeedle" x1="150" y1="155" x2="150" y2="45" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+                                <circle cx="150" cy="155" r="8" class="gauge-pivot"/>
+                                <circle cx="150" cy="155" r="4" class="gauge-pivot-inner"/>
+                                <text class="gauge-label-min" x="22" y="175" text-anchor="middle">0%</text>
+                                <text class="gauge-label-max" x="278" y="175" text-anchor="middle">100%</text>
+                            </svg>
+                            <div class="text-center">
+                                <div class="reading-label">Movie Match Score</div>
+                                <div class="reading-value" id="readingValue">—</div>
+                                <div class="reading-sub" id="predictionLabel">Submit the form to view your movie match.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="result-meta p-3 rounded-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-semibold">Recommendation</span>
+                                <span class="badge rounded-pill" id="riskBadge">—</span>
+                            </div>
+                            <div class="fs-5 fw-semibold" id="predictionSummary">—</div>
+                            <div class="small text-muted mt-3" id="movieDetails">—</div>
+                            <div class="mt-4">
+                                <div class="small text-muted mb-2">Similar recommendations</div>
+                                <ul class="list-group list-group-flush" id="recommendationList"></ul>
+                            </div>
+                            <p class="small text-muted mt-3 mb-0">The gauge shows how strongly the selected movie title matches the catalog using the same TF-IDF and cosine similarity idea from the notebook.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultErrorWrap" class="mt-4" style="display:none;">
+                    <div class="alert-info rounded-4 p-3 text-danger" id="resultError"></div>
+                </div>
+                {% if prediction_text %}
+                <div class="alert alert-info mt-4 mb-0">{{ prediction_text }}</div>
+                {% endif %}
+            </div>
+        </section>
+
+        <footer class="text-center py-3 small text-muted">
+            Educational demo · Movie Recommendation Flow · <b>By Nikhil Sanjay Kumar Srivastava</b> · Not a substitute for professional advice
+        </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        window.FLASK_RESULT = {{ flask_result | tojson if flask_result else 'null' }};
+    </script>
+</body>
+</html>
